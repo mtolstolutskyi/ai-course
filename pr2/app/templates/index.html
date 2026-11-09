@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Детекція обʼєктів</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 48rem; margin: 2rem auto; padding: 0 1rem; }
+    form { display: flex; gap: .75rem; align-items: center; margin: 1.5rem 0; flex-wrap: wrap; }
+    button { padding: .5rem 1rem; font-size: 1rem; cursor: pointer; }
+    label { display: flex; align-items: center; gap: .4rem; }
+    #summary { margin: .5rem 0; font-weight: 600; }
+    .error { color: #b00020; }
+    #canvas { max-width: 100%; display: none; margin: .5rem 0; }
+    table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+    th, td { border: 1px solid #ccc; padding: .3rem .5rem; text-align: left; }
+  </style>
+</head>
+<body>
+  <h1>Детекція обʼєктів</h1>
+
+  <form id="detect-form">
+    <input id="image" type="file" name="image" accept="image/*" required>
+    <label>Поріг <input id="confidence" type="number" min="0.05" max="0.95" step="0.05" value="0.25"></label>
+    <button type="submit">Знайти обʼєкти</button>
+  </form>
+
+  <div id="summary"></div>
+  <canvas id="canvas"></canvas>
+  <div id="table"></div>
+
+  <script>
+    const form = document.getElementById('detect-form');
+    const summary = document.getElementById('summary');
+    const table = document.getElementById('table');
+    const canvas = document.getElementById('canvas');
+
+    function drawBoxes(file, objects) {
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        ctx.lineWidth = Math.max(2, img.width / 300);
+        ctx.font = Math.max(14, img.width / 50) + 'px sans-serif';
+        objects.forEach(o => {
+          const b = o.box;
+          ctx.strokeStyle = '#ff3b30';
+          ctx.strokeRect(b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1);
+          const label = o.class + ' ' + o.confidence.toFixed(2);
+          const w = ctx.measureText(label).width + 8;
+          const h = parseInt(ctx.font) + 6;
+          ctx.fillStyle = '#ff3b30';
+          ctx.fillRect(b.x1, Math.max(0, b.y1 - h), w, h);
+          ctx.fillStyle = '#fff';
+          ctx.fillText(label, b.x1 + 4, Math.max(h - 6, b.y1 - 6));
+        });
+        canvas.style.display = 'block';
+      };
+      img.src = URL.createObjectURL(file);
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const file = document.getElementById('image').files[0];
+      if (!file) return;
+
+      const data = new FormData();
+      data.append('image', file);
+      data.append('confidence', document.getElementById('confidence').value);
+
+      summary.className = '';
+      summary.textContent = 'Обробка…';
+      table.innerHTML = '';
+      canvas.style.display = 'none';
+
+      try {
+        const response = await fetch('/api/detect', { method: 'POST', body: data });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          summary.className = 'error';
+          summary.textContent = payload.error || 'Сталася помилка';
+          return;
+        }
+
+        summary.textContent = 'Знайдено обʼєктів: ' + payload.count +
+          '  |  час inference: ' + payload.inference_ms + ' мс  |  поріг: ' + payload.confidence_threshold;
+        drawBoxes(file, payload.objects);
+
+        if (payload.count > 0) {
+          const rows = payload.objects.map((o, i) =>
+            `<tr><td>${i + 1}</td><td>${o.class}</td><td>${o.confidence.toFixed(3)}</td>` +
+            `<td>(${o.box.x1}, ${o.box.y1}) - (${o.box.x2}, ${o.box.y2})</td></tr>`).join('');
+          table.innerHTML = '<table><tr><th>#</th><th>Клас</th><th>Confidence</th><th>Рамка (x1, y1) - (x2, y2)</th></tr>' + rows + '</table>';
+        }
+      } catch (error) {
+        summary.className = 'error';
+        summary.textContent = 'Не вдалося звернутися до сервера.';
+      }
+    });
+  </script>
+</body>
+</html>

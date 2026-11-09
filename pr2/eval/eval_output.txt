@@ -1,0 +1,30 @@
+﻿
+=== поріг 0.25 ===
+
+street-bus.jpg     знайдено  6    9692 мс
+    зайве:     {'stop sign': 1}
+people-zidane.jpg  знайдено  3      98 мс
+    пропущено: {'tie': 1}
+cats-couch.jpg     знайдено  5     106 мс
+bear.jpg           знайдено  1     122 мс
+living-room.jpg    знайдено 11     103 мс
+    зайве:     {'dining table': 1}
+bedroom.jpg        знайдено  7     107 мс
+    зайве:     {'book': 1}
+empty-wall.jpg     знайдено  0      61 мс
+Разом пропусків: 1, зайвих: 3
+
+=== поріг 0.5 ===
+street-bus.jpg     знайдено  4      69 мс
+    пропущено: {'person': 1}
+people-zidane.jpg  знайдено  2      63 мс
+    пропущено: {'tie': 2}
+cats-couch.jpg     знайдено  3      65 мс
+    пропущено: {'remote': 1, 'couch': 1}
+bear.jpg           знайдено  1      73 мс
+living-room.jpg    знайдено  4      68 мс
+    пропущено: {'chair': 1, 'dining table': 1, 'refrigerator': 1, 'potted plant': 1, 'vase': 1, 'clock': 1}
+bedroom.jpg        знайдено  5      74 мс
+    пропущено: {'book': 1}
+empty-wall.jpg     знайдено  0      68 мс
+Разом пропусків: 12, зайвих: 0
